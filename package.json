@@ -1,0 +1,10 @@
+{
+  "name": "homebridge-hubaura",
+  "version": "1.0.0",
+  "description": "Sync Box Hubaura dans l'app Maison, en local sur le réseau (Tuya 3.4) : lampe colorée, Synchro TV, Musique, Film et scènes",
+  "main": "index.js",
+  "private": true,
+  "keywords": ["homebridge-plugin"],
+  "engines": { "homebridge": "^1.6.0 || ^2.0.0", "node": ">=22" },
+  "dependencies": { "tuyapi": "^7.7.1" }
+}

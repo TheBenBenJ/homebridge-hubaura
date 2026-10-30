@@ -1,0 +1,14 @@
+{
+  "pluginAlias": "Hubaura",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "nom": { "title": "Nom", "type": "string", "default": "Ambilight" },
+      "id": { "title": "Tuya device id", "type": "string", "required": true },
+      "key": { "title": "Tuya local key", "type": "string", "required": true },
+      "ip": { "title": "IP", "type": "string" }
+    }
+  }
+}
