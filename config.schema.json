@@ -5,10 +5,19 @@
   "schema": {
     "type": "object",
     "properties": {
-      "nom": { "title": "Nom", "type": "string", "default": "Ambilight" },
+      "nom": {
+        "title": "Name",
+        "description": "Name of the light in the Home app; the mode selector is called \"<name> Modes\". It also defines the accessories' identity: changing it makes HomeKit see new accessories.",
+        "type": "string",
+        "default": "Ambilight"
+      },
       "id": { "title": "Tuya device id", "type": "string", "required": true },
       "key": { "title": "Tuya local key", "type": "string", "required": true },
-      "ip": { "title": "IP", "type": "string" }
+      "ip": {
+        "title": "IP address",
+        "description": "Optional. Without it, or when it changes, the plugin looks for the box on the local network.",
+        "type": "string"
+      }
     }
   }
 }
