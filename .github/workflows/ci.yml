@@ -46,6 +46,13 @@ jobs:
           while IFS= read -r -d '' f; do python3 -m json.tool "$f" > /dev/null || status=1; done < <(git ls-files -z -- '*.json')
           exit $status
 
+      - name: Biome (lint and format)
+        run: npx --yes @biomejs/biome@2.6.8 check .
+
+      - name: Offline tests
+        # test/plugin.test.js: a recording fake of tuyapi and a fake Homebridge API; no network, no box, no key.
+        run: node --test
+
       - name: Promote to production
         # Fast-forward only: GitHub refuses anything else, and the run turns red.
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -43,7 +43,20 @@ const MODE_COLOR = 'color_mode';
 const MODE_SCENE = 'ambi_mode';
 
 // Scene names shown in the Home app, in the order of the Tuya app's grid: values 1 to 12 of DP 113.
-const SCENES = ['Lecture', 'Réveil', 'Bonne nuit', 'Ciel', 'Romantique', 'Coloré', 'Rêveur', 'Dynamique', 'Boucle', 'Magnifique', 'Tournesol', 'Arc-en-ciel'];
+const SCENES = [
+  'Lecture',
+  'Réveil',
+  'Bonne nuit',
+  'Ciel',
+  'Romantique',
+  'Coloré',
+  'Rêveur',
+  'Dynamique',
+  'Boucle',
+  'Magnifique',
+  'Tournesol',
+  'Arc-en-ciel',
+];
 
 // Inputs of the mode selector, in Home app order: the input identifier is the index + 1.
 // Titles are shown in the Home app; the order is part of the accessory identity, keep it.
@@ -58,11 +71,24 @@ const INPUTS = [
 /** HomeKit hue (0-360) and saturation (0-100), at full value, to the box's "rrggbb" colour. */
 function hsToRgbHex(hue, saturation) {
   const c = saturation / 100;
-  const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
   const m = 1 - c;
   const sector = Math.floor(hue / 60) % 6;
-  const [r, g, b] = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][sector];
-  return [r, g, b].map((n) => Math.round((n + m) * 255).toString(16).padStart(2, '0')).join('');
+  const [r, g, b] = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ][sector];
+  return [r, g, b]
+    .map((n) =>
+      Math.round((n + m) * 255)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('');
 }
 
 /** The box's "rrggbb" colour to HomeKit hue and saturation (brightness is a separate DP). */
@@ -183,7 +209,12 @@ class HubauraPlatform {
       const brightness = this.pendingBrightness;
       this.pendingColor = this.pendingBrightness = null;
       const data = color
-        ? { [DP_POWER]: true, [DP_MODE]: MODE_COLOR, [DP_COLOR]: hsToRgbHex(color.hue, color.saturation), ...(brightness ? { [DP_COLOR_BRIGHTNESS]: brightness } : {}) }
+        ? {
+            [DP_POWER]: true,
+            [DP_MODE]: MODE_COLOR,
+            [DP_COLOR]: hsToRgbHex(color.hue, color.saturation),
+            ...(brightness ? { [DP_COLOR_BRIGHTNESS]: brightness } : {}),
+          }
         : { [this.brightnessDp()]: brightness };
       this.send(data).catch(() => {});
     }, COALESCE_DELAY_MS);
@@ -191,7 +222,9 @@ class HubauraPlatform {
 
   /** Selector input of the current mode; unknown modes such as "setting_mode" keep the previous input. */
   currentInput() {
-    const index = INPUTS.findIndex((input) => input.mode === this.dps[DP_MODE] && (input.scene == null || input.scene === this.dps[DP_SCENE]));
+    const index = INPUTS.findIndex(
+      (input) => input.mode === this.dps[DP_MODE] && (input.scene == null || input.scene === this.dps[DP_SCENE]),
+    );
     if (index >= 0) this.lastInput = index + 1;
     return this.lastInput;
   }
@@ -201,13 +234,17 @@ class HubauraPlatform {
     if (!this.light) return;
     const { Characteristic } = this.api.hap;
     const { hue, saturation } = this.currentColor();
-    this.light.updateCharacteristic(Characteristic.On, !!this.dps[DP_POWER])
+    this.light
+      .updateCharacteristic(Characteristic.On, !!this.dps[DP_POWER])
       .updateCharacteristic(Characteristic.Brightness, this.dps[this.brightnessDp()] ?? 100);
     // While a grouped change is pending, keep the colour the user is choosing.
     if (!this.pendingColor && !this.pendingBrightness) {
-      this.light.updateCharacteristic(Characteristic.Hue, hue).updateCharacteristic(Characteristic.Saturation, saturation);
+      this.light
+        .updateCharacteristic(Characteristic.Hue, hue)
+        .updateCharacteristic(Characteristic.Saturation, saturation);
     }
-    this.modeSelector?.updateCharacteristic(Characteristic.Active, this.dps[DP_POWER] ? 1 : 0)
+    this.modeSelector
+      ?.updateCharacteristic(Characteristic.Active, this.dps[DP_POWER] ? 1 : 0)
       .updateCharacteristic(Characteristic.ActiveIdentifier, this.currentInput());
   }
 
@@ -220,14 +257,21 @@ class HubauraPlatform {
     // "nom" is the historical config key for the name. The name seeds the accessory UUID, which
     // is the HomeKit identity: changing the formula or the name creates a new accessory.
     const name = `${this.config.nom || DEFAULT_NAME} Modes`;
-    const accessory = new this.api.platformAccessory(name, uuid.generate(`${PLUGIN_NAME}:${name}`), Categories.TELEVISION);
+    const accessory = new this.api.platformAccessory(
+      name,
+      uuid.generate(`${PLUGIN_NAME}:${name}`),
+      Categories.TELEVISION,
+    );
     this.modeSelector = accessory.addService(Service.Television, name);
-    this.modeSelector.setCharacteristic(Characteristic.ConfiguredName, name)
+    this.modeSelector
+      .setCharacteristic(Characteristic.ConfiguredName, name)
       .setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
-    this.modeSelector.getCharacteristic(Characteristic.Active)
+    this.modeSelector
+      .getCharacteristic(Characteristic.Active)
       .onGet(() => (this.dps[DP_POWER] ? 1 : 0))
       .onSet((value) => this.send({ [DP_POWER]: !!value }));
-    this.modeSelector.getCharacteristic(Characteristic.ActiveIdentifier)
+    this.modeSelector
+      .getCharacteristic(Characteristic.ActiveIdentifier)
       .onGet(() => this.currentInput())
       .onSet((value) => {
         const { mode, scene } = INPUTS[value - 1];
@@ -236,7 +280,8 @@ class HubauraPlatform {
     INPUTS.forEach(({ title }, i) => {
       // The subtype ("entree" = input) is part of the service identity: keep it.
       const input = accessory.addService(Service.InputSource, title, `entree-${i + 1}`);
-      input.setCharacteristic(Characteristic.Identifier, i + 1)
+      input
+        .setCharacteristic(Characteristic.Identifier, i + 1)
         .setCharacteristic(Characteristic.ConfiguredName, title)
         .setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
         .setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.OTHER)
@@ -256,16 +301,20 @@ class HubauraPlatform {
     if (!this.box) return callback([]);
     const name = this.config.nom || DEFAULT_NAME;
     this.light = new Service.Lightbulb(name, 'lampe');
-    this.light.getCharacteristic(Characteristic.On)
+    this.light
+      .getCharacteristic(Characteristic.On)
       .onGet(() => !!this.dps[DP_POWER])
       .onSet((value) => this.send({ [DP_POWER]: !!value }));
-    this.light.getCharacteristic(Characteristic.Brightness)
+    this.light
+      .getCharacteristic(Characteristic.Brightness)
       .onGet(() => this.dps[this.brightnessDp()] ?? 100)
       .onSet((value) => this.setTarget('brightness', value));
-    this.light.getCharacteristic(Characteristic.Hue)
+    this.light
+      .getCharacteristic(Characteristic.Hue)
       .onGet(() => this.currentColor().hue)
       .onSet((value) => this.setTarget('hue', value));
-    this.light.getCharacteristic(Characteristic.Saturation)
+    this.light
+      .getCharacteristic(Characteristic.Saturation)
       .onGet(() => this.currentColor().saturation)
       .onSet((value) => this.setTarget('saturation', value));
     const information = new Service.AccessoryInformation()
@@ -278,3 +327,5 @@ class HubauraPlatform {
 }
 
 module.exports = (api) => api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, HubauraPlatform);
+// Test hooks: Homebridge only calls the exported function; the offline tests use the pure helpers and the table.
+Object.assign(module.exports, { hsToRgbHex, rgbHexToHs, INPUTS });
